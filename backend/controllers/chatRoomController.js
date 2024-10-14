@@ -1,6 +1,5 @@
 const ChatRoom = require('../models/ChatRoom'); 
-const Message = require('../models/Message');
-const User = require('../models/User');
+const Request = require('../models/Request');
 
 exports.createChatRoom = async (req, res) => {
   try {
@@ -21,6 +20,16 @@ exports.createChatRoom = async (req, res) => {
     res.status(201).json(savedChatRoom);
   } catch (error) {
     res.status(500).json({ message: 'Erro ao criar chat room', error });
+  }
+};
+
+exports.getAllChatRooms = async (req, res) => {
+  try {
+    const chatRooms = await ChatRoom.find().populate('participants', 'username email');
+
+    res.status(200).json(chatRooms);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar todas as salas', error });
   }
 };
 
@@ -69,11 +78,11 @@ exports.deleteChatRoom = async (req, res) => {
       return res.status(404).json({ message: 'Chat room não encontrado' });
     }
 
-    if (chatRoom.createdBy.toString() !== req.user.id) {
+    if (chatRoom.creator.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Você não tem permissão para deletar este chat room' });
     }
 
-    await chatRoom.remove();
+    await ChatRoom.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: 'Chat room deletado com sucesso' });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao deletar chat room', error });
@@ -102,10 +111,16 @@ exports.joinChatRoom = async (req, res) => {
         return res.status(400).json({ message: 'Usuário já está no chat room' });
       }
   
-      chatRoom.participants.push(req.user.id);
-      const updatedChatRoom = await chatRoom.save();
+      const newRequest = new Request({
+        requester: req.user.id,
+        requestType: 'join_room',
+        chatRoom: chatRoom._id,
+        status: 'pending',
+      });
+
+      await newRequest.save();
   
-      res.status(200).json(updatedChatRoom);
+      res.status(201).json({ message: 'Pedido de entrada enviado com sucesso', request: newRequest });  
     } catch (error) {
       res.status(500).json({ message: 'Erro ao adicionar usuário ao chat room', error });
     }

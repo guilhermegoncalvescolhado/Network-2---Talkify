@@ -3,6 +3,7 @@ const router = express.Router();
 const chatRoomController = require('../controllers/chatRoomController');
 const authMiddleware = require('../middleware/auth');
 
+router.get('/', chatRoomController.getAllChatRooms);
 router.post('/create-chat', authMiddleware, chatRoomController.createChatRoom);
 router.get('/:id', chatRoomController.getChatRoom);
 router.put('/:id', authMiddleware, chatRoomController.updateChatRoom);
