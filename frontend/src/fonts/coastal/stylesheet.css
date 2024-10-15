@@ -1,0 +1,144 @@
+@font-face {
+    font-family: 'Coastal Rough';
+    src: url('Coastal-Rough.eot');
+    src: local('Coastal Rough'), local('Coastal-Rough'),
+        url('Coastal-Rough.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-Rough.woff2') format('woff2'),
+        url('Coastal-Rough.woff') format('woff'),
+        url('Coastal-Rough.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Outline Rough Oblique';
+    src: url('Coastal-OutlineRoughOblique.eot');
+    src: local('Coastal Outline Rough Oblique'), local('Coastal-OutlineRoughOblique'),
+        url('Coastal-OutlineRoughOblique.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-OutlineRoughOblique.woff2') format('woff2'),
+        url('Coastal-OutlineRoughOblique.woff') format('woff'),
+        url('Coastal-OutlineRoughOblique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Outline Oblique';
+    src: url('Coastal-OutlineOblique.eot');
+    src: local('Coastal Outline Oblique'), local('Coastal-OutlineOblique'),
+        url('Coastal-OutlineOblique.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-OutlineOblique.woff2') format('woff2'),
+        url('Coastal-OutlineOblique.woff') format('woff'),
+        url('Coastal-OutlineOblique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Round Oblique';
+    src: url('Coastal-RoundOblique.eot');
+    src: local('Coastal Round Oblique'), local('Coastal-RoundOblique'),
+        url('Coastal-RoundOblique.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-RoundOblique.woff2') format('woff2'),
+        url('Coastal-RoundOblique.woff') format('woff'),
+        url('Coastal-RoundOblique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Rough Oblique';
+    src: url('Coastal-RoughOblique.eot');
+    src: local('Coastal Rough Oblique'), local('Coastal-RoughOblique'),
+        url('Coastal-RoughOblique.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-RoughOblique.woff2') format('woff2'),
+        url('Coastal-RoughOblique.woff') format('woff'),
+        url('Coastal-RoughOblique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Outline Rough';
+    src: url('Coastal-OutlineRough.eot');
+    src: local('Coastal Outline Rough'), local('Coastal-OutlineRough'),
+        url('Coastal-OutlineRough.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-OutlineRough.woff2') format('woff2'),
+        url('Coastal-OutlineRough.woff') format('woff'),
+        url('Coastal-OutlineRough.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Hand Oblique';
+    src: url('Coastal-HandOblique.eot');
+    src: local('Coastal Hand Oblique'), local('Coastal-HandOblique'),
+        url('Coastal-HandOblique.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-HandOblique.woff2') format('woff2'),
+        url('Coastal-HandOblique.woff') format('woff'),
+        url('Coastal-HandOblique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Outline';
+    src: url('Coastal-Outline.eot');
+    src: local('Coastal Outline'), local('Coastal-Outline'),
+        url('Coastal-Outline.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-Outline.woff2') format('woff2'),
+        url('Coastal-Outline.woff') format('woff'),
+        url('Coastal-Outline.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Clean Oblique';
+    src: url('Coastal-CleanOblique.eot');
+    src: local('Coastal Clean Oblique'), local('Coastal-CleanOblique'),
+        url('Coastal-CleanOblique.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-CleanOblique.woff2') format('woff2'),
+        url('Coastal-CleanOblique.woff') format('woff'),
+        url('Coastal-CleanOblique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Coastal Round';
+    src: url('Coastal-Round.eot');
+    src: local('Coastal Round'), local('Coastal-Round'),
+        url('Coastal-Round.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-Round.woff2') format('woff2'),
+        url('Coastal-Round.woff') format('woff'),
+        url('Coastal-Round.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Hand';
+    src: url('Coastal-Hand.eot');
+    src: local('Coastal Hand'), local('Coastal-Hand'),
+        url('Coastal-Hand.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-Hand.woff2') format('woff2'),
+        url('Coastal-Hand.woff') format('woff'),
+        url('Coastal-Hand.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Coastal Clean';
+    src: url('Coastal-Clean.eot');
+    src: local('Coastal Clean'), local('Coastal-Clean'),
+        url('Coastal-Clean.eot?#iefix') format('embedded-opentype'),
+        url('Coastal-Clean.woff2') format('woff2'),
+        url('Coastal-Clean.woff') format('woff'),
+        url('Coastal-Clean.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
