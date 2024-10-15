@@ -1,4 +1,7 @@
 const socketIo = require('socket.io');
+const Message = require('../models/Message');
+const User = require('../models/User');
+const ChatRoom = require('../models/ChatRoom');
 
 const configureSocket = (server) => {
   const io = socketIo(server, {
@@ -44,10 +47,129 @@ const configureSocket = (server) => {
       console.log(`Usuário entrou na sala: ${chatRoomId}`);
     });
 
-    socket.on('sendMessage', (data) => {
-      const { chatRoomId, message, sender } = data;
+    socket.on('sendMessage', async (data) => {
+      try {
+        const { chatRoomId, content, sender, isPrivate, recipient } = data;
 
-      io.to(chatRoomId).emit('receiveMessage', { message, sender });
+        const newMessage = new Message({
+          sender,
+          content,
+          isPrivate
+        });
+
+        if (isPrivate) {
+          newMessage.recipient = recipient;
+          await newMessage.save();
+          
+          io.to(recipient).emit('receivePrivateMessage', {
+            message: newMessage,
+            sender: await User.findById(sender).select('username')
+          });
+        } else {
+          newMessage.chatRoom = chatRoomId;
+          await newMessage.save();
+          
+          io.to(chatRoomId).emit('receiveMessage', {
+            message: newMessage,
+            sender: await User.findById(sender).select('username')
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao enviar mensagem:', error);
+        socket.emit('messageError', { error: 'Erro ao enviar mensagem' });
+      }
+    });
+
+    socket.on('updateMessage', async (data) => {
+      try {
+        const { messageId, content, userId } = data;
+        const message = await Message.findById(messageId);
+
+        if (!message) {
+          socket.emit('messageError', { error: 'Mensagem não encontrada' });
+          return;
+        }
+
+        if (message.sender.toString() !== userId) {
+          socket.emit('messageError', { error: 'Não autorizado' });
+          return;
+        }
+
+        message.content = content;
+        message.updatedAt = Date.now();
+        await message.save();
+
+        if (message.isPrivate) {
+          io.to(message.recipient.toString()).emit('messageUpdated', { message });
+        } else {
+          io.to(message.chatRoom.toString()).emit('messageUpdated', { message });
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar mensagem:', error);
+        socket.emit('messageError', { error: 'Erro ao atualizar mensagem' });
+      }
+    });
+
+    socket.on('deleteMessage', async (data) => {
+      try {
+        const { messageId, userId } = data;
+        const message = await Message.findById(messageId);
+
+        if (!message) {
+          socket.emit('messageError', { error: 'Mensagem não encontrada' });
+          return;
+        }
+
+        if (message.sender.toString() !== userId) {
+          socket.emit('messageError', { error: 'Não autorizado' });
+          return;
+        }
+
+        await Message.findByIdAndDelete(messageId);
+
+        if (message.isPrivate) {
+          io.to(message.recipient.toString()).emit('messageDeleted', { messageId });
+        } else {
+          io.to(message.chatRoom.toString()).emit('messageDeleted', { messageId });
+        }
+      } catch (error) {
+        console.error('Erro ao excluir mensagem:', error);
+        socket.emit('messageError', { error: 'Erro ao excluir mensagem' });
+      }
+    });
+
+    socket.on('getMessagesByChatRoom', async (chatRoomId) => {
+      try {
+        const messages = await Message.find({ chatRoom: chatRoomId, isPrivate: false })
+          .populate('sender', 'username')
+          .sort({ createdAt: 1 });
+
+        socket.emit('chatRoomMessages', { messages });
+      } catch (error) {
+        console.error('Erro ao buscar mensagens da sala:', error);
+        socket.emit('messageError', { error: 'Erro ao buscar mensagens da sala' });
+      }
+    });
+
+    socket.on('getPrivateMessages', async (data) => {
+      try {
+        const { userId, otherUserId } = data;
+        const messages = await Message.find({
+          isPrivate: true,
+          $or: [
+            { sender: userId, recipient: otherUserId },
+            { sender: otherUserId, recipient: userId }
+          ]
+        })
+        .populate('sender', 'username')
+        .populate('recipient', 'username')
+        .sort({ createdAt: 1 });
+
+        socket.emit('privateMessages', { messages });
+      } catch (error) {
+        console.error('Erro ao buscar mensagens privadas:', error);
+        socket.emit('messageError', { error: 'Erro ao buscar mensagens privadas' });
+      }
     });
 
     socket.on('disconnect', () => {
