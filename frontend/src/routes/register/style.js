@@ -1,65 +1,8 @@
 import styled from "styled-components";
 
-export const GlobalContainer = styled.div`
-  height: 100vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 80px;
-  background: linear-gradient(45deg, #2c263a, #6b5769);
-`;
-
-export const FormContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 50px;
-  max-width: 800px;
-  width: 45%;
-  min-width: 350px;
-  color: white;
-  background-color: #1a0033;
-  border-radius: 25px;
-  box-shadow: 0 0 45px #8a2be2;
-`;
-
-export const Image = styled.img`
-  max-width: 150px;
-  transform: scale(2);
-`;
-
 export const Title = styled.h1`
   color: #fff;
-  margin-bottom: 50px;
-`;
-
-export const Form = styled.form`
-  width: 100%;
-  max-width: 400px;
-`;
-
-export const InputContainer = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-export const Input = styled.input`
-  width: 100%;
-  padding: 15px;
-  margin: 20px 0;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  text-align: center;
-
-  &:focus {
-    border-color: #6b5769;
-    outline: none;
-  }
+  margin-bottom: 20px;
 `;
 
 export const Button = styled.button`

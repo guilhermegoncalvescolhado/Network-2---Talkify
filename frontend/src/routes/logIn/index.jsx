@@ -1,39 +1,36 @@
-import { GlobalContainer, Image, Title, Form, InputContainer, Input, Button, Text, SpecialLink, FormContainer, ButtonHome } from "./style";
+import { Title, Text, SpecialLink } from "./style";
+import { FormContainerComponent } from "../../components/FormContainer"
+import { FormComponent } from "../../components/Form"
+import { InputContainerComponent } from "../../components/InputContainer"
+import { GlobalContainerComponent } from "../../components/GlobalContainer";
+import { FormInputComponent } from "../../components/FormInput";
+import { FormButtonComponent } from "../../components/FormButton"; 
 import Logo from "../../images/Logo.png";
 
 export const LoginPage = () => {
   const handleLogin = (event) => {
     event.preventDefault();
-    const email = document.getElementById("loginEmail").value;
-    const password = document.getElementById("loginPassword").value;
-
-    if (email && password) {
-      alert("Login successful");
-      window.location.href = "Dashboard.html"; 
-    } else {
-      alert("Please fill in all fields");
-    }
   };
 
   return (
-    <GlobalContainer>
-      <Image src={Logo} alt="Logo" />
-      <FormContainer>
+    <GlobalContainerComponent>
+      <img src={Logo} width="400px" alt="Logo" />
+      <FormContainerComponent>
       <Title>Login</Title>
-      <Form onSubmit={handleLogin}>
-        <InputContainer>
-          <Input type="email" id="loginEmail" placeholder="Email" required />
-          <Input type="password" id="loginPassword" placeholder="Password" required />
-        </InputContainer>
-        <Button type="submit">Login</Button>
-      </Form>
-      <ButtonHome as="a" href="/" className="back-button">
+      <FormComponent onSubmit={handleLogin}>
+        <InputContainerComponent>
+          <FormInputComponent type="email" id="loginEmail" placeholder="Email" required />
+          <FormInputComponent type="password" id="loginPassword" placeholder="Password" required />
+        </InputContainerComponent>
+        <FormButtonComponent type="submit">Login</FormButtonComponent>
+      </FormComponent>
+      <FormButtonComponent as="a" href="/" className="back-button">
         Back to Home
-      </ButtonHome>
+      </FormButtonComponent>
       <Text>
         Don't have an account? <SpecialLink href="/register">Register here</SpecialLink>
       </Text>
-      </FormContainer>
-    </GlobalContainer>
+      </FormContainerComponent>
+    </GlobalContainerComponent>
   );
 };
