@@ -6,6 +6,9 @@ const authMiddleware = require('../middleware/auth');
 // Criar uma nova mensagem
 router.post('/', authMiddleware, messageController.createMessage);
 
+// Obter a lista de conversas do usuário (semelhante ao WhatsApp)
+router.get('/lastConversations', authMiddleware, messageController.getConversationsList);
+
 // Obter uma mensagem específica por ID
 router.get('/:id', authMiddleware, messageController.getMessage);
 
@@ -20,8 +23,5 @@ router.get('/chatroom/:chatRoomId', authMiddleware, messageController.getMessage
 
 // Obter mensagens privadas entre o usuário atual e outro usuário
 router.get('/private/:otherUserId', authMiddleware, messageController.getPrivateMessages);
-
-// Obter a lista de conversas do usuário (semelhante ao WhatsApp)
-router.get('/conversations', authMiddleware, messageController.getConversationsList);
 
 module.exports = router;

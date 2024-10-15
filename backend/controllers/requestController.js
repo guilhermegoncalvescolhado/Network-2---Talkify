@@ -43,10 +43,10 @@ exports.getJoinRequests = async (req, res) => {
   
       await Request.findByIdAndDelete(req.params.requestId);
   
-      req.io.to(userId).emit('joinApproved', {
-        chatRoomId: chatRoom._id,
-        message: 'Você foi aprovado para entrar na sala'
-      });
+      // req.io.to(userId).emit('joinApproved', {
+      //   chatRoomId: chatRoom._id,
+      //   message: 'Você foi aprovado para entrar na sala'
+      // });
 
       res.status(200).json({ message: 'Pedido aprovado com sucesso', chatRoom });
     } catch (error) {

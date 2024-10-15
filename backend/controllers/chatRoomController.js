@@ -120,11 +120,11 @@ exports.joinChatRoom = async (req, res) => {
 
       await newRequest.save();
   
-      req.io.to(chatRoom.creator).emit('notifyCreator', {
-        userId: req.user.id,
-        chatRoomId: chatRoom._id,
-        message: `Usuário ${req.user.username} quer entrar na sala`
-      });
+      // req.io.to(chatRoom.creator).emit('notifyCreator', {
+      //   userId: req.user.id,
+      //   chatRoomId: chatRoom._id,
+      //   message: `Usuário ${req.user.username} quer entrar na sala`
+      // });
   
       res.status(201).json({ message: 'Pedido de entrada enviado com sucesso', request: newRequest });  
     } catch (error) {
