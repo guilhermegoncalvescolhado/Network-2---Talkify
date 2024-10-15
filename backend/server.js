@@ -20,13 +20,13 @@ app.use('/api', routes);
 connectDB();
 
 // Configure Socket.IO
-//const io = configureSocket(server);
+const io = configureSocket(server);
 
 // Make io accessible to our router
-// app.use((req, res, next) => {
-//   req.io = io;
-//   next();
-// });
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 // Middleware de tratamento de erros
 app.use(errorHandler);

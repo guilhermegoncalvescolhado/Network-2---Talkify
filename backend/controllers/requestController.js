@@ -43,6 +43,11 @@ exports.getJoinRequests = async (req, res) => {
   
       await Request.findByIdAndDelete(req.params.requestId);
   
+      // req.io.to(userId).emit('joinApproved', {
+      //   chatRoomId: chatRoom._id,
+      //   message: 'Você foi aprovado para entrar na sala'
+      // });
+
       res.status(200).json({ message: 'Pedido aprovado com sucesso', chatRoom });
     } catch (error) {
       res.status(500).json({ message: 'Erro ao aprovar pedido de entrada', error });
@@ -66,6 +71,11 @@ exports.getJoinRequests = async (req, res) => {
   
       await Request.findByIdAndDelete(req.params.requestId);
   
+      req.io.to(userId).emit('joinRejected', {
+        chatRoomId: chatRoom._id,
+        message: 'Seu pedido para entrar na sala foi rejeitado'
+      });
+      
       res.status(200).json({ message: 'Pedido rejeitado com sucesso' });
     } catch (error) {
       res.status(500).json({ message: 'Erro ao rejeitar pedido de entrada', error });

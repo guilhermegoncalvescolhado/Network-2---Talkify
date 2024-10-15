@@ -180,7 +180,8 @@ exports.getConversationsList = async (req, res, next) => {
       chatRoom: { $in: (await ChatRoom.find({ participants: userId })).map(room => room._id) }
     })
     .sort({ createdAt: -1 })
-    .populate('chatRoom', 'name');
+    .populate('chatRoom', 'name')
+    .populate('sender', 'username');
 
     // Combinar e processar as mensagens
     const conversations = {};
@@ -194,6 +195,7 @@ exports.getConversationsList = async (req, res, next) => {
           type: 'private',
           name: otherUser.username,
           lastMessage: msg.content,
+          lastMessageSender: msg.sender._id.toString() === userId ? 'You' : msg.sender.username,
           createdAt: msg.createdAt
         };
       }
@@ -207,6 +209,7 @@ exports.getConversationsList = async (req, res, next) => {
           type: 'group',
           name: msg.chatRoom.name,
           lastMessage: msg.content,
+          lastMessageSender: msg.sender._id.toString() === userId ? 'You' : msg.sender.username,
           createdAt: msg.createdAt
         };
       }
