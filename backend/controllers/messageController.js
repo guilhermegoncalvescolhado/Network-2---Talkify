@@ -3,6 +3,7 @@ const User = require('../models/User');
 const ChatRoom = require('../models/ChatRoom');
 const WebSocket = require('ws');
 const { getWebSocketServer } = require('../config/socket'); 
+const { encrypt, decrypt } = require('../config/sec');
 
 exports.createMessage = async (req, res, next) => {
   try {
@@ -21,9 +22,15 @@ exports.createMessage = async (req, res, next) => {
       throw error;
     }
 
+    if (!content) {
+      return res.status(400).json({ message: 'O conteúdo da mensagem é obrigatório' });
+    }
+
+    const encryptedMessage = JSON.stringify(encrypt(content));
+
     const newMessage = new Message({
       sender,
-      content,
+      content: encryptedMessage,
       isPrivate
     });
 
@@ -68,7 +75,12 @@ exports.getMessage = async (req, res, next) => {
       throw error;
     }
 
-    res.json(message);
+    const decryptedContent = decrypt(JSON.parse(message.content));
+
+    res.json({
+      ...message.toObject(),
+      content: decryptedContent 
+    });
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500;
@@ -94,7 +106,9 @@ exports.updateMessage = async (req, res, next) => {
       throw error;
     }
 
-    message.content = content;
+    const encryptedMessage = JSON.stringify(encrypt(content));
+
+    message.content = encryptedMessage;
     message.updatedAt = Date.now();
 
     await message.save();
@@ -103,10 +117,11 @@ exports.updateMessage = async (req, res, next) => {
 
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ message: 'Mensagem atualizada', content: content}));
+        client.send(JSON.stringify({ message: 'Mensagem atualizada', content: encryptedMessage}));
       }
     });
-    res.json({ message: 'Mensagem atualizada com sucesso', message });
+
+    res.json(message);
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500;
@@ -155,8 +170,13 @@ exports.getMessagesByChatRoom = async (req, res, next) => {
       .populate('sender', 'username')
       .sort({ createdAt: 1 });
 
-    res.json(messages);
-  } catch (error) {
+      const decryptedMessages = messages.map(message => ({
+        ...message.toObject(),
+        content: decrypt(JSON.parse(message.content))
+      }));
+  
+      res.json(decryptedMessages);
+    } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500;
     }
