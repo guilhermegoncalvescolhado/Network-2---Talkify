@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Title, Text, SpecialLink } from "./style.js";
 import { FormContainerComponent } from "../../components/FormContainer"
 import { FormComponent } from "../../components/Form"
@@ -7,22 +7,26 @@ import { InputContainerComponent } from "../../components/InputContainer"
 import { FormInputComponent } from "../../components/FormInput/index.jsx"; 
 import { FormButtonComponent } from "../../components/FormButton/index.jsx";
 import Logo from "../../images/Logo.png";
+import { toast } from "react-toastify";
+import { AuthContext } from "../../providers/Auth/index.jsx";
 
 export const RegisterPage = () => {
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const { register } = useContext(AuthContext);
 
   const handleRegister = (event) => {
     event.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("The two passowrds must be equal.");
+      toast.error("The two passowrds must be equal.")
       return;
+    } else {
+      register({username, email, password})
     }
-
-    alert("Succesfully registered!");
   };
 
   return (
@@ -35,9 +39,9 @@ export const RegisterPage = () => {
           <InputContainerComponent>
             <FormInputComponent
               type="text"
-              placeholder="Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
             />
             <FormInputComponent
@@ -62,7 +66,7 @@ export const RegisterPage = () => {
               required
             />
           </InputContainerComponent>
-          <FormButtonComponent as="a" href="/dashboard">Registrar</FormButtonComponent>
+          <FormButtonComponent type="submit">Registrar</FormButtonComponent>
         </FormComponent>
           <FormButtonComponent as="a" href="/">Back to Home</FormButtonComponent>
         <Text>
