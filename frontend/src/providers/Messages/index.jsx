@@ -8,13 +8,23 @@ export const MessageContext = createContext();
 export const MessageProvider = ({ children }) => {
   const nav = useNavigate();
 
+  const createMessage = (token, data) => {
+    Api.post("/message/", data,{
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((response) => {
+        console.log(response)
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
   const conversationsList = (token, setConversations) => {
-    console.log(token);
     Api.get("/message/lastConversations", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((response) => {
-        console.log(response);
         setConversations(response.data)
       })
       .catch((err) => {
@@ -25,8 +35,18 @@ export const MessageProvider = ({ children }) => {
       });
   };
 
-  const getOneChat = (token, chatId, isPrivate) => {
+  const getOneChat = (token, chatId, isPrivate, setMessages) => {
     if(isPrivate){
+      Api.get("/message/private/"+chatId, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((response) => {
+          console.log(response);
+          setMessages(response.data)
+        })
+        .catch((err) => {
+          console.log(err);
+        })
 
     } else {
       Api.get("/message/chatroom/"+chatId, {
@@ -34,12 +54,16 @@ export const MessageProvider = ({ children }) => {
       })
         .then((response) => {
           console.log(response);
+          setMessages(response.data)
+        })
+        .catch((err) => {
+          console.log(err);
         })
     }
   }
 
   return (
-    <MessageContext.Provider value={{ conversationsList }}>
+    <MessageContext.Provider value={{ conversationsList, getOneChat, createMessage }}>
       {children}
     </MessageContext.Provider>
   );

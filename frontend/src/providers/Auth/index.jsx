@@ -15,6 +15,10 @@ export const AuthProvider = ({ children }) => {
           "@Talkfy: Token",
           JSON.stringify(response.data.token)
         );
+        localStorage.setItem(
+          "@Talkfy: Username",
+          JSON.stringify(response.data.user.username)
+        );
         setToken(response.data.token);
         nav("/dashboard");
       })
@@ -30,6 +34,10 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem(
           "@Talkfy: Token",
           JSON.stringify(response.data.token)
+        );
+        localStorage.setItem(
+          "@Talkfy: Username",
+          JSON.stringify(response.data.user.username)
         );
         console.log(response);
         setToken(response);
