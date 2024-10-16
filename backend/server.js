@@ -1,8 +1,8 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const connectDB = require('./config/database');
+const cors = require('cors');
 const configureSocket = require('./config/socket');
 const routes = require('./routes');
 const errorHandler = require('./utils/errorHandler');
@@ -13,7 +13,14 @@ const server = http.createServer(app);
 // Middleware
 app.use(express.json());
 
-// Usar as rotas centralizadas
+// CORS configuration
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Use centralized routes
 app.use('/api', routes);
 
 // Connect to MongoDB
@@ -28,7 +35,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware de tratamento de erros
+// Error handling middleware
 app.use(errorHandler);
 
 // Start server

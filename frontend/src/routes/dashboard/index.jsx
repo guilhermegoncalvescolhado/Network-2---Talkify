@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import Logo from "../../images/Logo.png";
+import { AuthContext } from "../../providers/Auth";
+import { MessageContext } from "../../providers/Messages";
+import { useNavigate } from "react-router-dom";
 
 const AppContainer = styled.div`
   display: flex;
@@ -135,10 +138,26 @@ const Image = styled.img`
 
 export const DashboardPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [conversations, setConversations] = useState([]);
+  const [token, setToken] = useState(JSON.parse(localStorage.getItem("@Talkfy: Token")) || "");
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+  const nav = useNavigate()
+  const { authenticate } = useContext(AuthContext);
+  const { conversationsList } = useContext(MessageContext);
+
+  useEffect(() => {
+    authenticate(token, ()=>{}, true)
+    conversationsList(token, setConversations)
+  }, [token])
+
+  const loggout = () => {
+    setToken("")
+    nav('/')
+    localStorage.removeItem("@Talkfy: Token")
+  }
 
   return (
     <AppContainer>
@@ -151,11 +170,11 @@ export const DashboardPage = () => {
         <Button>Create Room</Button>
         <RoomsList>
           <h3>Rooms List</h3>
-          {[1,1,1,1,1,1].map(()=><p>Guilherme</p>)}
+          {conversations?.map((chat)=><p key={chat.id}>{chat.name}</p>)}
         </RoomsList>
         <Button style={{ marginTop: "auto" }}>Configuration</Button>
         <Button>Report</Button>
-        <Button>Logout</Button>
+        <Button onClick={(e) => loggout()} >Logout</Button> 
       </Sidebar>
       <MainContent isOpen={isSidebarOpen}>
         <UserInfo>

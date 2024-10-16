@@ -79,3 +79,5 @@ exports.login = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.authenticate = (req, res) => res.json({ message: 'Você está autenticado!' });

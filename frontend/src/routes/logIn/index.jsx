@@ -6,12 +6,24 @@ import { GlobalContainerComponent } from "../../components/GlobalContainer";
 import { FormInputComponent } from "../../components/FormInput";
 import { FormButtonComponent } from "../../components/FormButton"; 
 import Logo from "../../images/Logo.png";
+import { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../../providers/Auth";
 
 export const LoginPage = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [token, setToken] = useState(JSON.parse(localStorage.getItem("@Talkfy: Token")) || "");
+
+  const { login, authenticate } = useContext(AuthContext);
+
+  useEffect(() => {
+    authenticate(token, ()=>{}, false)
+  })
+
   const handleLogin = (event) => {
     event.preventDefault();
+    login({email, password}, setToken)
   };
-
   return (
     <GlobalContainerComponent>
       <img src={Logo} width="400px" alt="Logo" />
@@ -19,8 +31,8 @@ export const LoginPage = () => {
       <Title>Login</Title>
       <FormComponent onSubmit={handleLogin}>
         <InputContainerComponent>
-          <FormInputComponent type="email" id="loginEmail" placeholder="Email" required />
-          <FormInputComponent type="password" id="loginPassword" placeholder="Password" required />
+          <FormInputComponent type="email" id="loginEmail" placeholder="Email" onChange={(e) => setEmail(e.target.value)} required />
+          <FormInputComponent type="password" id="loginPassword" placeholder="Password" onChange={(e) => setPassword(e.target.value)} required />
         </InputContainerComponent>
         <FormButtonComponent type="submit">Login</FormButtonComponent>
       </FormComponent>
