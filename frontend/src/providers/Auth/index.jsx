@@ -7,7 +7,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const nav = useNavigate();
-  const register = (data, setToken) => {
+  const register = (data) => {
     Api.post("/user/register", data)
       .then((response) => {
         toast.success("User registered successfully!");
@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }) => {
           "@Talkfy: Username",
           JSON.stringify(response.data.user.username)
         );
-        setToken(response.data.token);
         nav("/dashboard");
       })
       .catch((err) => {

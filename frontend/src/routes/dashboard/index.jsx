@@ -1,12 +1,20 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import Logo from "../../images/Logo.png";
 import { AuthContext } from "../../providers/Auth";
 import { MessageContext } from "../../providers/Messages";
 import { useNavigate } from "react-router-dom";
-import { FiAlertTriangle } from "react-icons/fi";
+import {
+  FiAlertTriangle,
+  FiMail,
+  FiUsers,
+  FiBell,
+  FiPlus,
+} from "react-icons/fi";
 import { IoIosSend } from "react-icons/io";
-
+import { WebSocketContext } from "../../providers/WebSocket";
+import { RoomContext } from "../../providers/Rooms";
+import { RequestContext } from "../../providers/Requests";
 
 const AppContainer = styled.div`
   display: flex;
@@ -73,6 +81,19 @@ const MessageContainer = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-y: scroll;
+`;
+
+const MessageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+`;
+
+const SenderName = styled.span`
+  font-size: 0.8em;
+  color: #a0a0a0;
+  margin-bottom: 2px;
 `;
 
 const RecivedMessage = styled.div`
@@ -81,7 +102,6 @@ const RecivedMessage = styled.div`
   align-self: flex-start;
   max-width: 60%;
   width: max-content;
-  margin-bottom: 10px;
   border-radius: 5px;
 `;
 
@@ -89,10 +109,8 @@ const SentMessage = styled.div`
   background-color: #1b083f89;
   padding: 10px;
   align-self: flex-end;
-
   max-width: 60%;
   width: max-content;
-  margin-bottom: 10px;
   border-radius: 5px;
 `;
 
@@ -102,18 +120,21 @@ const InputContainer = styled.div`
   background-color: #3d2b5f;
   border-radius: 25px;
   padding: 5px;
+  padding-left: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const Input = styled.input`
   flex: 1;
-  padding: 15px 20px;
+  height: 100%;
   background-color: transparent;
   color: white;
   border: none;
   font-size: 16px;
   outline: none;
-
+  box-sizing: border-box;
+  padding: 0 10px;
+  width: 100%;
   &::placeholder {
     color: rgba(255, 255, 255, 0.6);
   }
@@ -249,25 +270,6 @@ const WelcomeLogo = styled.img`
   }
 `;
 
-const StartChatButton = styled.button`
-  background-color: #ff5f5f;
-  color: white;
-  padding: 10px 20px;
-  font-size: 1.5em;
-  border: none;
-  border-radius: 30px;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-  z-index: 1;
-
-  &:hover {
-    background-color: #ff4040;
-  }
-`;
-
 const FloatingCircle = styled.div`
   position: absolute;
   background: rgba(255, 255, 255, 0.1);
@@ -286,60 +288,250 @@ const FloatingCircle = styled.div`
   }
 `;
 
+const ActionButton = styled(Button)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const SlideDownInput = styled.div`
+  background-color: #5f4378;
+  height: ${(props) => (props.isOpen ? "40px" : "0")};
+  overflow: hidden;
+  margin-bottom: 10px;
+  margin-top: -10px;
+  width: 95%;
+  border-radius: 0 0 10px 10px;
+  align-self: center;
+  transition: height 0.3s ease-in-out;
+`;
+
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ModalContent = styled.div`
+  background-color: #2d1b4e;
+  padding: 20px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 500px;
+`;
+
+const SearchInput = styled(Input)`
+  margin-bottom: 20px;
+`;
+
+const GroupList = styled.div`
+  max-height: 300px;
+  overflow-y: auto;
+`;
+
+const GroupItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #3d2b5f;
+`;
+
+const RequestButton = styled.button`
+  background-color: #3d2b5f;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+`;
+
+const RequestBadge = styled.span`
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ff5f5f;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.8em;
+`;
+
+const RequestItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #3d2b5f;
+`;
+
+const RequestActions = styled.div`
+  display: flex;
+  gap: 10px;
+`;
+
 export const DashboardPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [conversations, setConversations] = useState([]);
-  const [messages, setMessages] = useState();
-  const [name, setName] = useState();
-  const [message, setMessage] = useState();
-  const [chatId, setChatId] = useState();
-  const [isPrivate, setIsPrivate] = useState();
+  const [messages, setMessages] = useState([]);
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [chatId, setChatId] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [isPrivateChatInputOpen, setIsPrivateChatInputOpen] = useState(false);
+  const [privateEmail, setPrivateEmail] = useState("");
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [groupSearch, setGroupSearch] = useState("");
+  const [allGroups, setAllGroups] = useState([]);
+  const [isCreateRoomInputOpen, setIsCreateRoomInputOpen] = useState(false);
+  const [roomName, setRoomName] = useState("");
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [groupRequests, setGroupRequests] = useState([]);
+
   const [token, setToken] = useState(
     JSON.parse(localStorage.getItem("@Talkfy: Token")) || ""
   );
   const [username] = useState(
     JSON.parse(localStorage.getItem("@Talkfy: Username")) || ""
   );
-  console.log(messages);
+
+  const nav = useNavigate();
+  const { authenticate } = useContext(AuthContext);
+  const { conversationsList, getOneChat, createMessage, createPrivateMessage } =
+    useContext(MessageContext);
+  const { socket } = useContext(WebSocketContext);
+  const { createChatRoom, getAllChatRooms } = useContext(RoomContext);
+  const { joinChatRoom, getAllJoinRequest, approveJoinRequest, rejectJoinRequest } = useContext(RequestContext);
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-  const nav = useNavigate();
-  const { authenticate } = useContext(AuthContext);
-  const { conversationsList, getOneChat, createMessage } = useContext(MessageContext);
 
   useEffect(() => {
     authenticate(token, () => {}, true);
     conversationsList(token, setConversations);
-  }, [authenticate, conversationsList, token]);
+    getAllChatRooms(token, setAllGroups);
+  }, [authenticate, conversationsList, getAllChatRooms, token]);
 
-  const loggout = () => {
+  useEffect(() => {
+    if (socket) {
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log(data);
+        if (data.message === "Nova mensagem") {
+          getOneChat(token, chatId, isPrivate, setMessages);
+          conversationsList(token, setConversations);
+        }
+      };
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log(data);
+        if (data.message === "Nova sala criada" || data.message === "Sala de chat atualizada" || data.message === "Sala apagada") {
+          getAllChatRooms(token, setAllGroups);
+          conversationsList(token, setConversations);
+        }
+      };
+      
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log(data);
+        if (data.message === "Usuário quer entrar na sala ") {
+          getAllJoinRequest(token, chatId, setGroupRequests);
+          conversationsList(token, setConversations);
+        }
+      };
+      
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log(data);
+        if (data.message === "Pedido para entrar na sala aceito" || data.message === "Pedido rejeitado com sucesso") {
+          getAllChatRooms(token, setAllGroups);
+          conversationsList(token, setConversations);
+        }
+      };
+    }
+  }, [socket, chatId, isPrivate, getOneChat, token, conversationsList, getAllJoinRequest, getAllChatRooms]);
+
+  const loggout = useCallback(() => {
     setToken("");
     nav("/");
     localStorage.removeItem("@Talkfy: Token");
+  }, [nav]);
+
+  const selectChat = useCallback(
+    (chatId, type, name) => {
+      getOneChat(token, chatId, type === "private", setMessages);
+      setName(name);
+      setChatId(chatId);
+      setIsPrivate(type === "private");
+    },
+    [getOneChat, token]
+  );
+
+  const sendMessage = useCallback(() => {
+    const messageData = isPrivate
+      ? { recipient: chatId, content: message, isPrivate }
+      : { chatRoom: chatId, content: message, isPrivate };
+
+    createMessage(token, messageData);
+    setMessage("");
+  }, [isPrivate, chatId, message, createMessage, token]);
+
+  const sendPrivateMessage = useCallback(() => {
+    createPrivateMessage(token, { email: privateEmail });
+    setMessage("");
+  }, [privateEmail, createPrivateMessage, token]);
+
+
+  const openGroupModal = () => {
+    setIsGroupModalOpen(true);
   };
 
-  const selectChat = (chatId, type, name) => {
-    getOneChat(token, chatId, type === "private", setMessages);
-    setName(name);
-    setChatId(chatId);
-    setIsPrivate(type === "private")
+  const requestToJoinGroup = (groupId) => {
+    joinChatRoom(token, groupId)
   };
 
-  const sendMessage = () => {
-    isPrivate ? createMessage(token, {
-      recipient: chatId,
-      content: message,
-      isPrivate
-    }) : createMessage(token, {
-      chatRoom: chatId,
-      content: message,
-      isPrivate
+  const filteredGroups = allGroups.filter((group) =>
+    group.name.toLowerCase().includes(groupSearch.toLowerCase())
+  );
 
-    })
-    setMessage("")
-    
-  }
+  const openRequestModal = () => {
+    setIsRequestModalOpen(true);
+    getAllJoinRequest(token, chatId, setGroupRequests)
+  };
+  console.log(groupRequests)
+  const handleRequest = (requestId, action) => {
+    if (action === 'accept'){
+      approveJoinRequest(token, requestId)
+    } else {
+      rejectJoinRequest(token, requestId);
+    }
+    console.log(`Request ${requestId} ${action}`);
+    // Remove the request from the list
+    setGroupRequests(
+      groupRequests.filter((request) => request.id !== requestId)
+    );
+  };
+
+  const createRoom = () => {
+    createChatRoom(token, {name: roomName}, selectChat, setChatId);
+    setIsCreateRoomInputOpen(false);
+    setRoomName("");
+  };
+
   return (
     <AppContainer>
       <ToggleSidebarButton onClick={toggleSidebar} isOpen={isSidebarOpen}>
@@ -348,7 +540,35 @@ export const DashboardPage = () => {
 
       <Sidebar isOpen={isSidebarOpen}>
         <Image src={Logo} alt="Logo" />
-        <Button>Create Room</Button>
+        <ActionButton
+          onClick={() => setIsCreateRoomInputOpen(!isCreateRoomInputOpen)}
+        >
+          <FiPlus /> Create Room
+        </ActionButton>
+        <SlideDownInput isOpen={isCreateRoomInputOpen}>
+          <Input
+            placeholder="Enter room name"
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && createRoom()}
+          />
+        </SlideDownInput>
+        <ActionButton
+          onClick={() => setIsPrivateChatInputOpen(!isPrivateChatInputOpen)}
+        >
+          <FiMail /> Start Private Chat
+        </ActionButton>
+        <SlideDownInput isOpen={isPrivateChatInputOpen}>
+          <Input
+            placeholder="Enter email"
+            value={privateEmail}
+            onChange={(e) => setPrivateEmail(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && sendPrivateMessage()}
+          />
+        </SlideDownInput>
+        <ActionButton onClick={openGroupModal}>
+          <FiUsers /> Join a Group
+        </ActionButton>
         <RoomsList>
           <h3>Rooms List</h3>
           {conversations?.map((chat) => (
@@ -364,35 +584,65 @@ export const DashboardPage = () => {
         </RoomsList>
         <Button style={{ marginTop: "auto" }}>Configuration</Button>
         <Button>Report</Button>
-        <Button onClick={(e) => loggout()}>Logout</Button>
+        <Button onClick={()=>loggout()}>Logout</Button>
       </Sidebar>
+
       <MainContent isOpen={isSidebarOpen}>
         {messages && name ? (
           <>
             <UserInfo>
               <h2>{name}</h2>
+              {
+                !isPrivate &&
+                <RequestButton onClick={openRequestModal}>
+                  <FiBell />
+                  <RequestBadge>{groupRequests.length}</RequestBadge>
+                </RequestButton>
+              }
             </UserInfo>
             <MessageContainer>
               {messages.map((message) => {
-                return message.sender.username === username ? (
-                  <SentMessage key={message.id}>{message.content}</SentMessage>
-                ) : (
-                  <RecivedMessage key={message.id}>
-                    {message.content}
-                  </RecivedMessage>
+                const isSentByUser = message.sender.username === username;
+                return (
+                  <MessageWrapper
+                    key={message.id}
+                    style={{
+                      alignItems: isSentByUser ? "flex-end" : "flex-start",
+                    }}
+                  >
+                    {!isSentByUser && !message.isPrivate && (
+                      <SenderName>{message.sender.username}</SenderName>
+                    )}
+                    {isSentByUser ? (
+                      <SentMessage>{message.content}</SentMessage>
+                    ) : (
+                      <RecivedMessage>{message.content}</RecivedMessage>
+                    )}
+                  </MessageWrapper>
                 );
               })}
             </MessageContainer>
+
             <InputContainer>
-              <Input placeholder="Type your message here" value={message} onChange={(e)=>{
-                e.preventDefault();
-                setMessage(e.target.value);
-              }} onKeyDown={(e)=>{if(e.key === "enter") sendMessage()}}/>
+              <Input
+                placeholder="Type your message here"
+                value={message}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setMessage(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+              />
               <IconButton aria-label="Report">
-                <FiAlertTriangle size={20}/>
+                <FiAlertTriangle size={20} />
               </IconButton>
-              <SendButton aria-label="Send message" onClick={(e)=>{sendMessage()}}>
-                <IoIosSend size={20}/>
+              <SendButton aria-label="Send message" onClick={sendMessage}>
+                <IoIosSend size={20} />
               </SendButton>
             </InputContainer>
           </>
@@ -403,7 +653,6 @@ export const DashboardPage = () => {
             <WelcomeText>
               We're glad to have you here. Let's start chatting!
             </WelcomeText>
-            <StartChatButton onClick={() => {}}>Start Chat</StartChatButton>
             <FloatingCircle
               style={{
                 width: "200px",
@@ -431,6 +680,57 @@ export const DashboardPage = () => {
           </WelcomeContent>
         )}
       </MainContent>
+      {isRequestModalOpen && (
+        <Modal>
+          <ModalContent>
+            <h2>Group Join Requests</h2>
+            {groupRequests.map((request) =>{
+              console.log(request)
+              return (
+                <RequestItem key={request.id}>
+                  <span>{request.requester.email}</span>
+                  <RequestActions>
+                    <Button onClick={() => handleRequest(request._id, "accept")}>
+                      Accept
+                    </Button>
+                    <Button onClick={() => handleRequest(request._id, "decline")}>
+                      Decline
+                    </Button>
+                  </RequestActions>
+                </RequestItem>
+              )
+            } 
+            )}
+            <Button onClick={() => setIsRequestModalOpen(false)}>Close</Button>
+          </ModalContent>
+        </Modal>
+      )}
+      {isGroupModalOpen && (
+        <Modal>
+          <ModalContent>
+            <h2>Join a Group</h2>
+            <SearchInput
+              placeholder="Search groups"
+              value={groupSearch}
+              onChange={(e) => setGroupSearch(e.target.value)}
+            />
+            <GroupList>
+              {filteredGroups.map((group) => 
+              {console.log(group)
+                return (
+                <GroupItem key={group._id}>
+                  <span style={{flex: 1}}>{group.name}</span>
+                  <Button style={{width: "max-content"}} onClick={() => requestToJoinGroup(group._id)}>
+                    Request to Join
+                  </Button>
+                </GroupItem>
+              )}
+              )}
+            </GroupList>
+            <Button onClick={() => setIsGroupModalOpen(false)}>Close</Button>
+          </ModalContent>
+        </Modal>
+      )}
     </AppContainer>
   );
 };

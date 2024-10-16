@@ -2,6 +2,8 @@ const ChatRoom = require('../models/ChatRoom');
 const Request = require('../models/Request');
 const WebSocket = require('ws');
 const { getWebSocketServer } = require('../config/socket'); 
+const User = require('../models/User');
+const Message = require('../models/Message');
 
 exports.createChatRoom = async (req, res, next) => {
   try {
@@ -18,12 +20,29 @@ exports.createChatRoom = async (req, res, next) => {
     });
 
     const savedChatRoom = await newChatRoom.save();
-    
-    const wss = getWebSocketServer();
 
+    const user = await User.findById(req.user.id);
+
+    const newMessage = new Message({
+      sender: req.user.id,
+      content: "Bem vindo ao chat room criado pelo usuario " + user.username,
+      isPrivate: false,
+      chatRoom: savedChatRoom._id
+    });
+
+    await newMessage.save();
+
+    const wss = getWebSocketServer();
+    
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ message: 'Nova sala criada ', chatRoom: savedChatRoom._id }));
+        client.send(JSON.stringify({ message: 'Nova sala criada', chatRoom: savedChatRoom._id }));
+      }
+    });
+    
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Nova mensagem', chatRoom: savedChatRoom._id}));
       }
     });
 

@@ -4,6 +4,41 @@ const ChatRoom = require('../models/ChatRoom');
 const WebSocket = require('ws');
 const { getWebSocketServer } = require('../config/socket'); 
 
+exports.startPrivateMessage = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const sender = req.user.id;
+    const recipient = await User.findOne({ email: email });
+    console.log(recipient)
+    const newMessage = new Message({
+      sender,
+      content: "Primeira mensagem entre voces",
+      isPrivate: true,
+      recipient: recipient._id
+    });  
+    console.log(newMessage);
+    await newMessage.save();
+
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Nova mensagem', recipient: recipient}));
+      }
+    });
+    
+    res.status(201).json({ 
+      message: 'Mensagem criada com sucesso',
+      message: newMessage
+    });
+  } catch (error) {
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
+  }
+}
+
 exports.createMessage = async (req, res, next) => {
   try {
     const { recipient, content, chatRoom, isPrivate } = req.body;
@@ -212,8 +247,8 @@ exports.getConversationsList = async (req, res, next) => {
 
     // Combinar e processar as mensagens
     const conversations = {};
-
-    privateMessages.forEach(msg => {
+    console.log(privateMessages)
+    privateMessages.length > 0 && privateMessages.forEach(msg => {
       const otherUser = msg.sender._id.toString() === userId ? msg.recipient : msg.sender;
       const convoId = `private_${otherUser._id}`;
       if (!conversations[convoId] || conversations[convoId].createdAt < msg.createdAt) {
@@ -227,6 +262,8 @@ exports.getConversationsList = async (req, res, next) => {
         };
       }
     });
+
+    console.log("pimba")
 
     chatRoomMessages.forEach(msg => {
       const convoId = `group_${msg.chatRoom._id}`;

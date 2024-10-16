@@ -2,6 +2,8 @@ const ChatRoom = require('../models/ChatRoom');
 const Request = require('../models/Request');
 const WebSocket = require('ws');
 const { getWebSocketServer } = require('../config/socket'); 
+const Message = require('../models/Message');
+const User = require('../models/User');
 
 exports.getJoinRequests = async (req, res, next) => {
     try {
@@ -53,6 +55,23 @@ exports.getJoinRequests = async (req, res, next) => {
       wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({ message: 'Pedido para entrar na sala aceito', chatRoom: chatRoom._id }));
+        }
+      });
+
+
+      const user = await User.findById(request.requester);
+      const newMessage = new Message({
+        sender: request.requester,
+        content: "Usuário " + user.username + " se juntou ao chat",
+        isPrivate: false,
+        chatRoom: chatRoom._id
+      });
+
+      await newMessage.save()
+
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ message: 'Nova mensagem', chatRoom: chatRoom._id}));
         }
       });
 
