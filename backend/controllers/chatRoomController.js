@@ -1,7 +1,9 @@
 const ChatRoom = require('../models/ChatRoom'); 
 const Request = require('../models/Request');
+const WebSocket = require('ws');
+const { getWebSocketServer } = require('../config/socket'); 
 
-exports.createChatRoom = async (req, res) => {
+exports.createChatRoom = async (req, res, next) => {
   try {
     const { name } = req.body;
 
@@ -16,24 +18,38 @@ exports.createChatRoom = async (req, res) => {
     });
 
     const savedChatRoom = await newChatRoom.save();
+    
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Nova sala criada ', chatRoom: savedChatRoom._id }));
+      }
+    });
 
     res.status(201).json(savedChatRoom);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao criar chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
-exports.getAllChatRooms = async (req, res) => {
+exports.getAllChatRooms = async (req, res, next) => {
   try {
     const chatRooms = await ChatRoom.find().populate('participants', 'username email');
 
     res.status(200).json(chatRooms);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar todas as salas', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
-exports.getChatRoom = async (req, res) => {
+exports.getChatRoom = async (req, res, next) => {
   try {
     const chatRoom = await ChatRoom.findById(req.params.id).populate('participants', 'username email');
 
@@ -43,11 +59,14 @@ exports.getChatRoom = async (req, res) => {
 
     res.status(200).json(chatRoom);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
-exports.updateChatRoom = async (req, res) => {
+exports.updateChatRoom = async (req, res, next) => {
   try {
     const { name } = req.body;
     const chatRoom = await ChatRoom.findById(req.params.id);
@@ -64,13 +83,24 @@ exports.updateChatRoom = async (req, res) => {
 
     const updatedChatRoom = await chatRoom.save();
 
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Sala de chat atualizada ', chatRoom: updatedChatRoom._id }));
+      }
+    });
+
     res.status(200).json(updatedChatRoom);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao atualizar chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
-exports.deleteChatRoom = async (req, res) => {
+exports.deleteChatRoom = async (req, res, next) => {
   try {
     const chatRoom = await ChatRoom.findById(req.params.id);
 
@@ -83,23 +113,38 @@ exports.deleteChatRoom = async (req, res) => {
     }
 
     await ChatRoom.findByIdAndDelete(req.params.id);
+
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Sala apagada ', chatRoom: req.params.id }));
+      }
+    });
+
     res.status(200).json({ message: 'Chat room deletado com sucesso' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao deletar chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
-exports.getChatRoomsForUser = async (req, res) => {
+exports.getChatRoomsForUser = async (req, res, next) => {
   try {
     const chatRooms = await ChatRoom.find({ participants: req.user.id }).populate('participants', 'username email');
 
     res.status(200).json(chatRooms);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar chat rooms do usuário', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
-exports.joinChatRoom = async (req, res) => {
+exports.joinChatRoom = async (req, res, next) => {
     try {
       const chatRoom = await ChatRoom.findById(req.params.chatRoomId);
   
@@ -119,20 +164,25 @@ exports.joinChatRoom = async (req, res) => {
       });
 
       await newRequest.save();
-  
-      // req.io.to(chatRoom.creator).emit('notifyCreator', {
-      //   userId: req.user.id,
-      //   chatRoomId: chatRoom._id,
-      //   message: `Usuário ${req.user.username} quer entrar na sala`
-      // });
+
+      const wss = getWebSocketServer();
+
+       wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ message: 'Usuário quer entrar na sala ', chatRoom: req.params.id, userId: req.user.id }));
+        }
+      });
   
       res.status(201).json({ message: 'Pedido de entrada enviado com sucesso', request: newRequest });  
     } catch (error) {
-      res.status(500).json({ message: 'Erro ao adicionar usuário ao chat room', error });
+      if (!error.statusCode) {
+        error.statusCode = 500;
+      }
+      next(error);
     }
 };
 
-exports.removeUserFromChatRoom = async (req, res) => {
+exports.removeUserFromChatRoom = async (req, res, next) => {
   try {
     const chatRoom = await ChatRoom.findById(req.params.chatRoomId);
 
@@ -151,8 +201,19 @@ exports.removeUserFromChatRoom = async (req, res) => {
     chatRoom.participants = chatRoom.participants.filter(userId => userId.toString() !== req.body.userId);
     const updatedChatRoom = await chatRoom.save();
 
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Usuário removido da sala ', user: req.body.userId, chatRoom: req.params.chatRoomId }));
+      }
+    });
+
     res.status(200).json(updatedChatRoom);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover usuário do chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };

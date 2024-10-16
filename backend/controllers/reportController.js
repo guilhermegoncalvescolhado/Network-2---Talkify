@@ -1,6 +1,8 @@
 const Report = require('../models/Report');
+const WebSocket = require('ws');
+const { getWebSocketServer } = require('../config/socket'); 
 
-exports.createReport = async (req, res) => {
+exports.createReport = async (req, res, next) => {
   try {
     const { reportedUser, reason, reportedMessage, reportedChatRoom } = req.body;
 
@@ -17,13 +19,25 @@ exports.createReport = async (req, res) => {
     });
 
     const savedReport = await newReport.save();
+
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Novo report', chatRoom: reportedChatRoom, user: reportedUser }));
+      }
+    });
+
     res.status(201).json(savedReport);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao criar relatório', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
-exports.getReports = async (req, res) => {
+exports.getReports = async (req, res, next) => {
   try {
     const reports = await Report.find()
       .populate('reporter', 'username email')
@@ -33,11 +47,14 @@ exports.getReports = async (req, res) => {
 
     res.status(200).json(reports);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar relatórios', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
-exports.updateReportStatus = async (req, res) => {
+exports.updateReportStatus = async (req, res, next) => {
   try {
     const { reportId } = req.params;
     const { status } = req.body;
@@ -55,8 +72,19 @@ exports.updateReportStatus = async (req, res) => {
     report.status = status;
     await report.save();
 
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Report atualizado', Report: reportId, status: status }));
+      }
+    });
+
     res.status(200).json(report);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao atualizar status do relatório', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };

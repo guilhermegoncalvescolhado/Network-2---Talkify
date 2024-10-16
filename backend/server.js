@@ -3,12 +3,14 @@ const express = require('express');
 const http = require('http');
 const connectDB = require('./config/database');
 const cors = require('cors');
-const configureSocket = require('./config/socket');
 const routes = require('./routes');
 const errorHandler = require('./utils/errorHandler');
 
+const { createWebSocketServer } = require('./config/socket');
+
 const app = express();
 const server = http.createServer(app);
+const wss = createWebSocketServer(server);
 
 // Middleware
 app.use(express.json());
@@ -26,12 +28,8 @@ app.use('/api', routes);
 // Connect to MongoDB
 connectDB();
 
-// Configure Socket.IO
-const io = configureSocket(server);
-
 // Make io accessible to our router
 app.use((req, res, next) => {
-  req.io = io;
   next();
 });
 
