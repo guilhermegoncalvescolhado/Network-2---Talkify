@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const WebSocket = require('ws');
+const { getWebSocketServer } = require('../config/socket'); 
 
 exports.createUser = async (req, res, next) => {
   try {
@@ -62,6 +64,14 @@ exports.login = async (req, res, next) => {
     }
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Usuário online ', email }));
+      }
+    });
 
     res.json({ 
       message: 'Login realizado com sucesso',

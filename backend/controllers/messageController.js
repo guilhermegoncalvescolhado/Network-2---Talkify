@@ -1,6 +1,8 @@
 const Message = require('../models/Message');
 const User = require('../models/User');
 const ChatRoom = require('../models/ChatRoom');
+const WebSocket = require('ws');
+const { getWebSocketServer } = require('../config/socket'); 
 
 exports.createMessage = async (req, res, next) => {
   try {
@@ -32,6 +34,14 @@ exports.createMessage = async (req, res, next) => {
     }
 
     await newMessage.save();
+
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Nova mensagem', chatRoom: chatRoom, recipient: recipient}));
+      }
+    });
 
     res.status(201).json({ 
       message: 'Mensagem criada com sucesso',
@@ -88,6 +98,14 @@ exports.updateMessage = async (req, res, next) => {
     message.updatedAt = Date.now();
 
     await message.save();
+
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Mensagem atualizada', content: content}));
+      }
+    });
     res.json({ message: 'Mensagem atualizada com sucesso', message });
   } catch (error) {
     if (!error.statusCode) {
@@ -113,6 +131,15 @@ exports.deleteMessage = async (req, res, next) => {
     }
 
     await Message.findByIdAndDelete(req.params.id);
+
+    const wss = getWebSocketServer();
+
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ message: 'Mensagem deletada', chatRoom: chatRoom, recipient: recipient}));
+      }
+    });
+
     res.json({ message: 'Mensagem excluída com sucesso' });
   } catch (error) {
     if (!error.statusCode) {

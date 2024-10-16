@@ -1,7 +1,9 @@
 const ChatRoom = require('../models/ChatRoom'); 
 const Request = require('../models/Request');
+const WebSocket = require('ws');
+const { getWebSocketServer } = require('../config/socket'); 
 
-exports.getJoinRequests = async (req, res) => {
+exports.getJoinRequests = async (req, res, next) => {
     try {
       const chatRoom = await ChatRoom.findById(req.params.chatRoomId);
   
@@ -25,7 +27,7 @@ exports.getJoinRequests = async (req, res) => {
   };
   
   
-  exports.approveJoinRequest = async (req, res) => {
+  exports.approveJoinRequest = async (req, res, next) => {
     try {
       const request = await Request.findById(req.params.requestId).populate('chatRoom');
   
@@ -46,10 +48,13 @@ exports.getJoinRequests = async (req, res) => {
   
       await Request.findByIdAndDelete(req.params.requestId);
   
-      // req.io.to(userId).emit('joinApproved', {
-      //   chatRoomId: chatRoom._id,
-      //   message: 'Você foi aprovado para entrar na sala'
-      // });
+      const wss = getWebSocketServer();
+
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({ message: 'Pedido para entrar na sala aceito', chatRoom: chatRoom._id }));
+        }
+      });
 
       res.status(200).json({ message: 'Pedido aprovado com sucesso', chatRoom });
     } catch (error) {
@@ -60,7 +65,7 @@ exports.getJoinRequests = async (req, res) => {
     }
   };
   
-  exports.rejectJoinRequest = async (req, res) => {
+  exports.rejectJoinRequest = async (req, res, next) => {
     try {
       const request = await Request.findById(req.params.requestId).populate('chatRoom');
   
@@ -77,11 +82,8 @@ exports.getJoinRequests = async (req, res) => {
   
       await Request.findByIdAndDelete(req.params.requestId);
   
-      req.io.to(userId).emit('joinRejected', {
-        chatRoomId: chatRoom._id,
-        message: 'Seu pedido para entrar na sala foi rejeitado'
-      });
-      
+      const wss = getWebSocketServer();
+
       res.status(200).json({ message: 'Pedido rejeitado com sucesso' });
     } catch (error) {
         if (!error.statusCode) {
