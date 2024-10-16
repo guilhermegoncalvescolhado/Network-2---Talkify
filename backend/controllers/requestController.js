@@ -17,7 +17,10 @@ exports.getJoinRequests = async (req, res) => {
   
       res.status(200).json(requests);
     } catch (error) {
-      res.status(500).json({ message: 'Erro ao buscar pedidos de entrada', error });
+      if (!error.statusCode) {
+        error.statusCode = 500;
+      }
+      next(error);
     }
   };
   
@@ -50,7 +53,10 @@ exports.getJoinRequests = async (req, res) => {
 
       res.status(200).json({ message: 'Pedido aprovado com sucesso', chatRoom });
     } catch (error) {
-      res.status(500).json({ message: 'Erro ao aprovar pedido de entrada', error });
+      if (!error.statusCode) {
+        error.statusCode = 500;
+      }
+      next(error);
     }
   };
   
@@ -78,6 +84,9 @@ exports.getJoinRequests = async (req, res) => {
       
       res.status(200).json({ message: 'Pedido rejeitado com sucesso' });
     } catch (error) {
-      res.status(500).json({ message: 'Erro ao rejeitar pedido de entrada', error });
+        if (!error.statusCode) {
+          error.statusCode = 500;
+        }
+        next(error);
     }
   };

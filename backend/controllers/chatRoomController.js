@@ -19,7 +19,10 @@ exports.createChatRoom = async (req, res) => {
 
     res.status(201).json(savedChatRoom);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao criar chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
@@ -29,7 +32,10 @@ exports.getAllChatRooms = async (req, res) => {
 
     res.status(200).json(chatRooms);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar todas as salas', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
@@ -43,7 +49,10 @@ exports.getChatRoom = async (req, res) => {
 
     res.status(200).json(chatRoom);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
@@ -66,7 +75,10 @@ exports.updateChatRoom = async (req, res) => {
 
     res.status(200).json(updatedChatRoom);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao atualizar chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
@@ -85,7 +97,10 @@ exports.deleteChatRoom = async (req, res) => {
     await ChatRoom.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: 'Chat room deletado com sucesso' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao deletar chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
@@ -95,7 +110,10 @@ exports.getChatRoomsForUser = async (req, res) => {
 
     res.status(200).json(chatRooms);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar chat rooms do usuário', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
@@ -128,7 +146,10 @@ exports.joinChatRoom = async (req, res) => {
   
       res.status(201).json({ message: 'Pedido de entrada enviado com sucesso', request: newRequest });  
     } catch (error) {
-      res.status(500).json({ message: 'Erro ao adicionar usuário ao chat room', error });
+      if (!error.statusCode) {
+        error.statusCode = 500;
+      }
+      next(error);
     }
 };
 
@@ -153,6 +174,9 @@ exports.removeUserFromChatRoom = async (req, res) => {
 
     res.status(200).json(updatedChatRoom);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover usuário do chat room', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };

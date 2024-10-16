@@ -19,7 +19,10 @@ exports.createReport = async (req, res) => {
     const savedReport = await newReport.save();
     res.status(201).json(savedReport);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao criar relatório', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
@@ -33,7 +36,10 @@ exports.getReports = async (req, res) => {
 
     res.status(200).json(reports);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar relatórios', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
 
@@ -57,6 +63,9 @@ exports.updateReportStatus = async (req, res) => {
 
     res.status(200).json(report);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao atualizar status do relatório', error });
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error);
   }
 };
