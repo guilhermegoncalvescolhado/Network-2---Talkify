@@ -10,14 +10,13 @@ exports.startPrivateMessage = async (req, res, next) => {
     const { email } = req.body;
     const sender = req.user.id;
     const recipient = await User.findOne({ email: email });
-    console.log(recipient)
+    const encryptedMessage = JSON.stringify(encrypt("Primeira mensagem entre voces"))
     const newMessage = new Message({
       sender,
-      content: "Primeira mensagem entre voces",
+      content: encryptedMessage,
       isPrivate: true,
       recipient: recipient._id
     });  
-    console.log(newMessage);
     await newMessage.save();
 
     const wss = getWebSocketServer();
@@ -204,7 +203,6 @@ exports.getMessagesByChatRoom = async (req, res, next) => {
     const messages = await Message.find({ chatRoom: req.params.chatRoomId, isPrivate: false })
       .populate('sender', 'username')
       .sort({ createdAt: 1 });
-
       const decryptedMessages = messages.map(message => ({
         ...message.toObject(),
         content: decrypt(JSON.parse(message.content))
@@ -233,8 +231,12 @@ exports.getPrivateMessages = async (req, res, next) => {
     .populate('sender', 'username')
     .populate('recipient', 'username')
     .sort({ createdAt: 1 });
+    const decryptedMessages = messages.map(message => ({
+      ...message.toObject(),
+      content: decrypt(JSON.parse(message.content))
+    }));
 
-    res.json(messages);
+    res.json(decryptedMessages);
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500;
@@ -267,7 +269,6 @@ exports.getConversationsList = async (req, res, next) => {
 
     // Combinar e processar as mensagens
     const conversations = {};
-    console.log(privateMessages)
     privateMessages.length > 0 && privateMessages.forEach(msg => {
       const otherUser = msg.sender._id.toString() === userId ? msg.recipient : msg.sender;
       const convoId = `private_${otherUser._id}`;
@@ -282,8 +283,6 @@ exports.getConversationsList = async (req, res, next) => {
         };
       }
     });
-
-    console.log("pimba")
 
     chatRoomMessages.forEach(msg => {
       const convoId = `group_${msg.chatRoom._id}`;

@@ -226,6 +226,7 @@ const WelcomeContent = styled.div`
 const WelcomeTitle = styled.h1`
   font-size: 4em;
   color: #fff;
+  text-align: center;
   text-shadow: 6px 6px 20px rgba(0, 0, 0, 0.8);
   animation: pulse 2s infinite;
   z-index: 1;
@@ -413,7 +414,12 @@ export const DashboardPage = () => {
     useContext(MessageContext);
   const { socket } = useContext(WebSocketContext);
   const { createChatRoom, getAllChatRooms } = useContext(RoomContext);
-  const { joinChatRoom, getAllJoinRequest, approveJoinRequest, rejectJoinRequest } = useContext(RequestContext);
+  const {
+    joinChatRoom,
+    getAllJoinRequest,
+    approveJoinRequest,
+    rejectJoinRequest,
+  } = useContext(RequestContext);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -423,47 +429,51 @@ export const DashboardPage = () => {
     authenticate(token, () => {}, true);
     conversationsList(token, setConversations);
     getAllChatRooms(token, setAllGroups);
-  }, [authenticate, conversationsList, getAllChatRooms, token]);
+    if (chatId){
+      getAllJoinRequest(token, chatId, setGroupRequests);
+    }
+  }, [authenticate, chatId, conversationsList, getAllChatRooms, getAllJoinRequest, token]);
 
   useEffect(() => {
     if (socket) {
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log(data);
+
+        // Combine todos os casos em um único handler
         if (data.message === "Nova mensagem") {
+          console.log("Nova mensagem");
           getOneChat(token, chatId, isPrivate, setMessages);
           conversationsList(token, setConversations);
-        }
-      };
-
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log(data);
-        if (data.message === "Nova sala criada" || data.message === "Sala de chat atualizada" || data.message === "Sala apagada") {
+        } else if (
+          data.message === "Nova sala criada" ||
+          data.message === "Sala de chat atualizada" ||
+          data.message === "Sala apagada"
+        ) {
           getAllChatRooms(token, setAllGroups);
           conversationsList(token, setConversations);
-        }
-      };
-      
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log(data);
-        if (data.message === "Usuário quer entrar na sala ") {
+        } else if (data.message === "Usuário quer entrar na sala ") {
           getAllJoinRequest(token, chatId, setGroupRequests);
           conversationsList(token, setConversations);
-        }
-      };
-      
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log(data);
-        if (data.message === "Pedido para entrar na sala aceito" || data.message === "Pedido rejeitado com sucesso") {
+        } else if (
+          data.message === "Pedido para entrar na sala aceito" ||
+          data.message === "Pedido rejeitado com sucesso"
+        ) {
           getAllChatRooms(token, setAllGroups);
           conversationsList(token, setConversations);
+          getAllJoinRequest(token, chatId, setGroupRequests);
         }
       };
     }
-  }, [socket, chatId, isPrivate, getOneChat, token, conversationsList, getAllJoinRequest, getAllChatRooms]);
+  }, [
+    socket,
+    chatId,
+    isPrivate,
+    getOneChat,
+    token,
+    conversationsList,
+    getAllJoinRequest,
+    getAllChatRooms,
+  ]);
 
   const loggout = useCallback(() => {
     setToken("");
@@ -495,13 +505,12 @@ export const DashboardPage = () => {
     setMessage("");
   }, [privateEmail, createPrivateMessage, token]);
 
-
   const openGroupModal = () => {
     setIsGroupModalOpen(true);
   };
 
   const requestToJoinGroup = (groupId) => {
-    joinChatRoom(token, groupId)
+    joinChatRoom(token, groupId);
   };
 
   const filteredGroups = allGroups.filter((group) =>
@@ -510,12 +519,12 @@ export const DashboardPage = () => {
 
   const openRequestModal = () => {
     setIsRequestModalOpen(true);
-    getAllJoinRequest(token, chatId, setGroupRequests)
+    getAllJoinRequest(token, chatId, setGroupRequests);
   };
-  console.log(groupRequests)
+  console.log(groupRequests);
   const handleRequest = (requestId, action) => {
-    if (action === 'accept'){
-      approveJoinRequest(token, requestId)
+    if (action === "accept") {
+      approveJoinRequest(token, requestId);
     } else {
       rejectJoinRequest(token, requestId);
     }
@@ -527,7 +536,7 @@ export const DashboardPage = () => {
   };
 
   const createRoom = () => {
-    createChatRoom(token, {name: roomName}, selectChat, setChatId);
+    createChatRoom(token, { name: roomName }, selectChat, setChatId);
     setIsCreateRoomInputOpen(false);
     setRoomName("");
   };
@@ -584,7 +593,7 @@ export const DashboardPage = () => {
         </RoomsList>
         <Button style={{ marginTop: "auto" }}>Configuration</Button>
         <Button>Report</Button>
-        <Button onClick={()=>loggout()}>Logout</Button>
+        <Button onClick={() => loggout()}>Logout</Button>
       </Sidebar>
 
       <MainContent isOpen={isSidebarOpen}>
@@ -592,13 +601,12 @@ export const DashboardPage = () => {
           <>
             <UserInfo>
               <h2>{name}</h2>
-              {
-                !isPrivate &&
+              {!isPrivate && (
                 <RequestButton onClick={openRequestModal}>
                   <FiBell />
                   <RequestBadge>{groupRequests.length}</RequestBadge>
                 </RequestButton>
-              }
+              )}
             </UserInfo>
             <MessageContainer>
               {messages.map((message) => {
@@ -684,23 +692,26 @@ export const DashboardPage = () => {
         <Modal>
           <ModalContent>
             <h2>Group Join Requests</h2>
-            {groupRequests.map((request) =>{
-              console.log(request)
+            {groupRequests.map((request) => {
+              console.log(request);
               return (
                 <RequestItem key={request.id}>
                   <span>{request.requester.email}</span>
                   <RequestActions>
-                    <Button onClick={() => handleRequest(request._id, "accept")}>
+                    <Button
+                      onClick={() => handleRequest(request._id, "accept")}
+                    >
                       Accept
                     </Button>
-                    <Button onClick={() => handleRequest(request._id, "decline")}>
+                    <Button
+                      onClick={() => handleRequest(request._id, "decline")}
+                    >
                       Decline
                     </Button>
                   </RequestActions>
                 </RequestItem>
-              )
-            } 
-            )}
+              );
+            })}
             <Button onClick={() => setIsRequestModalOpen(false)}>Close</Button>
           </ModalContent>
         </Modal>
@@ -715,17 +726,20 @@ export const DashboardPage = () => {
               onChange={(e) => setGroupSearch(e.target.value)}
             />
             <GroupList>
-              {filteredGroups.map((group) => 
-              {console.log(group)
+              {filteredGroups.map((group) => {
+                console.log(group);
                 return (
-                <GroupItem key={group._id}>
-                  <span style={{flex: 1}}>{group.name}</span>
-                  <Button style={{width: "max-content"}} onClick={() => requestToJoinGroup(group._id)}>
-                    Request to Join
-                  </Button>
-                </GroupItem>
-              )}
-              )}
+                  <GroupItem key={group._id}>
+                    <span style={{ flex: 1 }}>{group.name}</span>
+                    <Button
+                      style={{ width: "max-content" }}
+                      onClick={() => requestToJoinGroup(group._id)}
+                    >
+                      Request to Join
+                    </Button>
+                  </GroupItem>
+                );
+              })}
             </GroupList>
             <Button onClick={() => setIsGroupModalOpen(false)}>Close</Button>
           </ModalContent>

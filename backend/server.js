@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const fs = require('fs');
-const https = require('https');
+const http = require('http');
 const connectDB = require('./config/database');
 const cors = require('cors');
 const routes = require('./routes');
@@ -13,24 +12,15 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-
-const privateKey = fs.readFileSync('../cert/server.key', 'utf8');
-const certificate = fs.readFileSync('../cert/server.cert', 'utf8');
-const credentials = { key: privateKey, cert: certificate };
-
-const httpsServer = https.createServer(credentials, app);
-const wss = createWebSocketServer(httpsServer);
+const server = http.createServer(app);
+const wss = createWebSocketServer(server);
 
 // CORS configuration
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-app.get('/', (req, res) => {
-  res.send('Conexão segura com HTTPS');
-});
 
 // Use centralized routes
 app.use('/api', routes);
@@ -47,7 +37,4 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 // Start server
-const PORT = process.env.PORT || 5000;
-httpsServer.listen(PORT, () => {
-  console.log(`Servidor HTTPS rodando na porta ${PORT}`);
-});
+server.listen(5000, () => console.log(`Server running on port ${5000}`));
