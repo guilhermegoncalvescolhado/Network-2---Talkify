@@ -11,11 +11,10 @@
 - [Tecnologias Usadas](#tecnologias-usadas)
 - [Instalação e Configuração](#instalação-e-configuração)
 - [Estrutura do Projeto](#estrutura-do-projeto)
-- [Frontend (Angular)](#frontend-angular)
-- [Backend (Spring Boot)](#backend-spring-boot)
+- [Frontend](#frontend-angular)
+- [Backend](#backend-spring-boot)
 - [Scripts Disponíveis](#scripts-disponíveis)
 - [Iniciando o projeto](#iniciando-o-projeto)
-- [Licença](#licença)
 
 ---
 
