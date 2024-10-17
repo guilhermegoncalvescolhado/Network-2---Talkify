@@ -6,7 +6,7 @@ export const WebSocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:5000');
+    const ws = new WebSocket('wss://localhost:5000');
     setSocket(ws);
 
     return () => {
