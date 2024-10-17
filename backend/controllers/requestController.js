@@ -4,6 +4,7 @@ const WebSocket = require('ws');
 const { getWebSocketServer } = require('../config/socket'); 
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { encrypt } = require('../config/sec');
 
 exports.getJoinRequests = async (req, res, next) => {
     try {
@@ -60,9 +61,10 @@ exports.getJoinRequests = async (req, res, next) => {
 
 
       const user = await User.findById(request.requester);
+      const encryptedMessage = JSON.stringify(encrypt("Usuário " + user.username + " se juntou ao chat"))
       const newMessage = new Message({
         sender: request.requester,
-        content: "Usuário " + user.username + " se juntou ao chat",
+        content: encryptedMessage,
         isPrivate: false,
         chatRoom: chatRoom._id
       });

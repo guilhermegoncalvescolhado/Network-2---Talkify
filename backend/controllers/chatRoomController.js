@@ -4,6 +4,7 @@ const WebSocket = require('ws');
 const { getWebSocketServer } = require('../config/socket'); 
 const User = require('../models/User');
 const Message = require('../models/Message');
+const { encrypt } = require('../config/sec');
 
 exports.createChatRoom = async (req, res, next) => {
   try {
@@ -22,10 +23,10 @@ exports.createChatRoom = async (req, res, next) => {
     const savedChatRoom = await newChatRoom.save();
 
     const user = await User.findById(req.user.id);
-
+    const encryptedMessage = JSON.stringify(encrypt("Bem vindo ao chat room criado pelo usuario " + user.username));
     const newMessage = new Message({
       sender: req.user.id,
-      content: "Bem vindo ao chat room criado pelo usuario " + user.username,
+      content: encryptedMessage,
       isPrivate: false,
       chatRoom: savedChatRoom._id
     });
